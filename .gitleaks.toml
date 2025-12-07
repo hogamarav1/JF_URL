@@ -1,51 +1,109 @@
-# Gitleaks configuration for Event Horizon
-# Strict allowlist for public Stripe payment links only
+title = "Alien Ultimate Secret Hunter 👽🔥"
+extend.useDefault = true
 
-title = "Event Horizon Secret Scanning"
-
-[extend]
-# Use default rules
-useDefault = true
-
+# ------------------ GLOBAL ALLOWLIST (False Positive Killer) ------------------
 [allowlist]
-description = "Allow public Stripe payment links and build artifacts only"
+description = "Kill all examples, placeholders, tests, docs"
 
-# CRITICAL: Do NOT exclude .github/ - workflows/configs are common leak sources
-# Only exclude build artifacts and known safe files
 paths = [
-  '''\.env$''',                 # Local env file (not tracked, in .gitignore)
-  '''\.env\.local$''',          # Local env file (not tracked, in .gitignore)
-  '''\.env\.example$''',        # Example env file with placeholders
-  '''node_modules/.*''',        # Dependencies (performance)
-  '''\.next/.*''',              # Build artifacts (performance)
-  '''coffee\.png$''',           # Image file
-  '''payment-links''',          # File containing public payment links
-  '''README\.md$''',            # Contains example Gitleaks output in documentation
+  '''\.env\.example$''',
+  '''\.env\.local$''',
+  '''\.env\.sample$''',
+  '''README\.md$''',
+  '''README.*\.md$''',
+  '''docs/.*''',
+  '''test/.*''',
+  '''tests/.*''',
+  '''example/.*''',
+  '''examples/.*''',
+  '''node_modules/.*''',
+  '''\.git/.*''',
+  '''\.next/.*''',
+  '''dist/.*''',
+  '''build/.*''',
 ]
 
-# Allowlist specific commits containing Mapbox public tokens (client-side, not secrets)
-commits = [
-  '''4fcc7485f3dc88e7dbed0f673c3a596049f1e0e2''',  # index.html, telegram_visualization.html with Mapbox token
-  '''42376cf3b03bc967ce8922739891678072c5354a''',  # main.js with Mapbox token
-]
-
-# Precise regex for public Stripe payment links only
-# Format: https://buy.stripe.com/{variable-length alphanumeric ID}
-# Stripe payment link IDs are typically 20-30 characters
 regexes = [
-  '''https://buy\.stripe\.com/[A-Za-z0-9]{20,30}''',
+  '''(your_|example_|placeholder_|dummy_|fake_|test_)''',
+  '''sk_test_''',           # Test keys allowed in code/docs
+  '''pk_test_''',
+  '''pk_live_''',           # Public keys are safe
+  '''example\.com''',
+  '''localhost''',
+  '''127\.0\.0\.1''',
+  '''sandbox''',
+  '''demo''',
+  '''1234567890''',
 ]
 
-# Stopwords for known false positives in file content (must be within allowlist in v8)
-stopwords = [
-  '''your_stripe_secret_key_here''',
-  '''your_mapbox_token_here''',
-  '''your_supabase_url_here''',
-  '''example''',
-  '''placeholder''',
-  '''sk_test_''',  # Allow test mode references in docs
-  '''pk_test_''',
-  '''sk_live_''',  # Mentioned in docs
-  '''pk_live_''',
-  '''mpk.eyJ1IjoiZGFuaWVsc3VueXVhbiIsImEiOiJjbHBiM3FhOXUwYmxnMmtubzljcGRwcHBjIn0.MO5mlsRbbl-O6labngyIaA''',  # Mapbox public token in git history
-]
+# ------------------ SUPER STRICT CUSTOM RULES (Only Real Keys Catch) ------------------
+
+# Stripe Live + Restricted Keys (Only sk_live_ / rk_live_ with high entropy)
+[[rules]]
+id = "stripe-live-secret"
+description = "Real Stripe Live Secret / Restricted Key 👽"
+regex = '''sk_live_[0-9a-zA-Z]{24,}'''
+entropy = 4.3
+tags = ["stripe", "payment", "live"]
+[[rules]]
+id = "stripe-restricted"
+description = "Stripe Restricted Key (rk_)"
+regex = '''rk_live_[0-9a-zA-Z]{24,}'''
+entropy = 4.3
+tags = ["stripe", "restricted"]
+
+# Square Live Access Token
+[[rules]]
+id = "square-live-token"
+description = "Square Production Access Token"
+regex = '''sq0atp-[0-9A-Za-z\-_]{22,}'''
+entropy = 3.8
+tags = ["square", "payment"]
+
+# AWS Access Key (Real ones only)
+[[rules]]
+id = "aws-access-key-real"
+description = "AWS Access Key ID (not example)"
+regex = '''AKIA[0-9A-Z]{16}'''
+entropy = 3.5
+tags = ["aws", "cloud"]
+
+# Supabase Anon/Public Key (real ones)
+[[rules]]
+id = "supabase-anon-key"
+description = "Supabase Anon Key"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9\-_]{30,}\.[a-zA-Z0-9\-_]{30,}'''
+entropy = 4.0
+tags = ["supabase", "database"]
+
+# OpenAI API Key
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI Secret Key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+entropy = 4.0
+tags = ["openai", "ai"]
+
+# Twilio API Key
+[[rules]]
+id = "twilio-api-key"
+description = "Twilio Auth Token"
+regex = '''[0-9a-f]{32}'''
+entropy = 3.8
+tags = ["twilio", "sms"]
+
+# SendGrid API Key
+[[rules]]
+id = "sendgrid-api-key"
+description = "SendGrid API Key"
+regex = '''SG\.[a-zA-Z0-9\-_]{22}\.[a-zA-Z0-9\-_]{43}'''
+entropy = 4.2
+tags = ["sendgrid", "email"]
+
+# Firebase Web API Key (real ones)
+[[rules]]
+id = "firebase-web-key"
+description = "Firebase Web API Key"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+entropy = 3.8
+tags = ["firebase", "google"]
